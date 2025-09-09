@@ -1,0 +1,12 @@
+pandas
+scikit-learn
+imbalanced-learn
+mlflow
+prefect
+dvc[s3]
+bentoml
+evidently
+prometheus-client
+grafana-api
+pytest
+flake8
