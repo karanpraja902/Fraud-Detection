@@ -8,3 +8,6 @@ venv/
 # DVC
 .dvc/cache
 data/raw/creditcard.csv
+
+.DS_Store
+*/.DS_Store
