@@ -1,23 +1,31 @@
-# Fraud-Detection
+# 💳 Fraud-Detection
 
-## Project Overview & Architecture
+This project demonstrates a full MLOps lifecycle for a credit card fraud detection system. It covers data versioning, pipeline orchestration, experiment tracking, model serving, and automated monitoring.
 
-The goal is to build an end-to-end system that not only classifies credit card transactions but also operationalizes the entire machine learning lifecycle. This includes automated data validation, experiment tracking, model training, deployment, and continuous monitoring for performance degradation or data drift.
+## 🏛️ Architecture
+[Insert architecture diagram here]
 
-## The architecture can be visualized as a continuous loop:
+## 🛠️ Tech Stack
+- **Data Versioning**: DVC
+- **Experiment Tracking**: MLflow
+- **Pipeline Orchestration**: Prefect
+- **Model Serving**: BentoML
+- **Monitoring**: Evidently AI, Prometheus, Grafana
+- **CI/CD**: GitHub Actions
 
-- Data Ingestion & Versioning: Raw data is pulled and versioned with DVC.
+## 🚀 Getting Started
 
-- Orchestrated Pipeline (Prefect): A Prefect flow automates preprocessing, training, and evaluation.
+### Prerequisites
+- Python 3.10.14
+- Docker
 
-- Experiment Tracking (MLflow): All training runs, parameters, metrics, and models are logged. The best model is registered.
+### Setup
+1. Clone the repo: `git clone ...`
+2. Create and activate a virtual environment.
+3. Install dependencies: `pip install -r requirements.txt`
+4. Pull data: `dvc pull`
 
-- Deployment (BentoML): The registered model is packaged into a containerized API service.
-
-- Serving: The BentoML service serves real-time prediction requests.
-
-- Monitoring (Evidently & Prometheus): A monitoring pipeline continuously checks for data drift. Metrics are exposed for visualization.
-
-- CI/CD (GitHub Actions): Git pushes trigger automated testing, training, and deployment.
-
-- Retraining Trigger: If monitoring detects significant drift, the training pipeline is automatically re-triggered.
+### Running the System
+- **Train the model**: `python pipelines/training_pipeline.py`
+- **Serve the model**: `bentoml serve fraud_detector:latest`
+- **Run monitoring**: `python pipelines/monitoring_pipeline.py`
