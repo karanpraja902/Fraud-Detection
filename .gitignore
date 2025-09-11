@@ -11,3 +11,11 @@ data/raw/creditcard.csv
 
 .DS_Store
 */.DS_Store
+
+# MLflow
+mlruns/
+
+# Data
+data/processed/
+data/raw/
+data/interim/
