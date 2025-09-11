@@ -45,3 +45,9 @@ def run_preprocessing(input_path: str, output_path: str):
     # Save processed data
     pd.concat([X_train_processed, y_train_processed], axis=1).to_csv(f"{output_path}/train.csv", index=False)
     pd.concat([X_test, y_test], axis=1).to_csv(f"{output_path}/test.csv", index=False)
+    
+if __name__ == "__main__":
+    input_path = "data/raw/creditcard.csv"     # path to my raw dataset
+    output_path = "data/processed"             # folder where train/test will be saved
+
+    run_preprocessing(input_path, output_path)
