@@ -1,5 +1,6 @@
 import mlflow
 import mlflow.sklearn
+from mlflow.models import infer_signature
 import optuna
 import pandas as pd
 from pathlib import Path
