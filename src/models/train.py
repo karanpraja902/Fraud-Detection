@@ -60,7 +60,8 @@ def train_model(train_path: str = DATA_PATH):
 
             # Predictions
             y_val_proba = clf.predict_proba(X_val)[:, 1]
-            y_val_pred = clf.predict(X_val)
+            threshold = trial.suggest_float("threshold", 0.1, 0.5)
+            y_val_pred = (y_val_proba >= threshold).astype(int)
 
             # Metrics
             val_auc = roc_auc_score(y_val, y_val_proba)
@@ -145,8 +146,9 @@ def train_model(train_path: str = DATA_PATH):
         signature = infer_signature(X_trainval, best_model.predict(X_trainval))
         input_example = X_trainval.iloc[:5]
         mlflow.sklearn.log_model(
-            best_model,
-            name="best_model",
+            sk_model=best_model,
+            artifact_path="best_model",
+            registered_model_name="fraud-detector",
             input_example=input_example,
             signature=signature
         )
