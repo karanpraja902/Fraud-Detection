@@ -12,10 +12,11 @@ import json
 import sys
 from datetime import datetime, timedelta
 import warnings
-warnings.filterwarnings('ignore')
+
+warnings.filterwarnings("ignore")
 
 # Add src to path to import our modules
-sys.path.append('src')
+sys.path.append("src")
 from models.evaluate import ModelEvaluator, evaluate_and_monitor
 from models.train import load_data
 
@@ -26,14 +27,14 @@ MONITORING_CONFIG = {
     "performance_decay_threshold": 0.05,  # 5% performance degradation
     "alert_email": "karanpraja902@gmail.com",
     "monitoring_logs_path": "monitoring_logs/",
-    "reference_sample_size": 1000  # Size of reference data for comparison
+    "reference_sample_size": 1000,  # Size of reference data for comparison
 }
 
 ALERT_LEVELS = {
     "LOW": "low",
     "MEDIUM": "medium",
     "HIGH": "high",
-    "CRITICAL": "critical"
+    "CRITICAL": "critical",
 }
 
 
@@ -46,13 +47,13 @@ def load_reference_data_task():
     print("📊 Loading reference data for baseline comparison...")
 
     try:
-        with open(MONITORING_CONFIG["baseline_stats_path"], 'r') as f:
+        with open(MONITORING_CONFIG["baseline_stats_path"], "r") as f:
             baseline_stats = json.load(f)
 
         # Load reference data (last training data)
         reference_df = pd.read_csv(f"data/processed/train.csv")
-        X_ref = reference_df.drop('Class', axis=1)
-        y_ref = reference_df['Class']
+        X_ref = reference_df.drop("Class", axis=1)
+        y_ref = reference_df["Class"]
 
         # Take a sample for efficient monitoring
         sample_size = min(MONITORING_CONFIG["reference_sample_size"], len(X_ref))
@@ -65,10 +66,12 @@ def load_reference_data_task():
             "features": list(X_ref.columns),
             "target_distribution": dict(y_ref.value_counts()),
             "reference_timestamp": baseline_stats.get("last_training_run"),
-            "fraud_rate": baseline_stats.get("fraud_rate")
+            "fraud_rate": baseline_stats.get("fraud_rate"),
         }
 
-        print(f"✅ Reference data loaded: {sample_size} samples, fraud rate: {reference_info['fraud_rate']:.4f}")
+        print(
+            f"✅ Reference data loaded: {sample_size} samples, fraud rate: {reference_info['fraud_rate']:.4f}"
+        )
 
         return reference_info
 
@@ -78,7 +81,9 @@ def load_reference_data_task():
 
 
 @task(name="detect_data_drift")
-def detect_data_drift_task(reference_info: dict, current_data_path: str = "data/processed/train.csv"):
+def detect_data_drift_task(
+    reference_info: dict, current_data_path: str = "data/processed/train.csv"
+):
     """
     Detect data drift between current data and reference baseline.
     Monitors schema changes, distribution shifts, and statistical anomalies.
@@ -91,7 +96,7 @@ def detect_data_drift_task(reference_info: dict, current_data_path: str = "data/
         "drift_scores": {},
         "drift_details": {},
         "alert_level": ALERT_LEVELS["LOW"],
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
     }
 
     try:
@@ -107,8 +112,12 @@ def detect_data_drift_task(reference_info: dict, current_data_path: str = "data/
             drift_results["drift_detected"] = True
             drift_results["drift_type"] = "schema_drift"
             drift_results["alert_level"] = ALERT_LEVELS["CRITICAL"]
-            drift_results["drift_details"]["missing_features"] = list(reference_features - current_features)
-            drift_results["drift_details"]["new_features"] = list(current_features - reference_features)
+            drift_results["drift_details"]["missing_features"] = list(
+                reference_features - current_features
+            )
+            drift_results["drift_details"]["new_features"] = list(
+                current_features - reference_features
+            )
 
             print("🚨 Schema drift detected!")
             return drift_results
@@ -119,7 +128,7 @@ def detect_data_drift_task(reference_info: dict, current_data_path: str = "data/
         drift_features = []
 
         for feature in numerical_features:
-            if feature == 'Class':
+            if feature == "Class":
                 continue
 
             current_mean = current_df[feature].mean()
@@ -142,13 +151,19 @@ def detect_data_drift_task(reference_info: dict, current_data_path: str = "data/
             drift_results["drift_detected"] = True
             drift_results["drift_type"] = "distribution_drift"
             drift_results["drift_details"]["drifted_features"] = drift_features
-            drift_results["alert_level"] = ALERT_LEVELS["HIGH"] if len(drift_features) > 3 else ALERT_LEVELS["MEDIUM"]
+            drift_results["alert_level"] = (
+                ALERT_LEVELS["HIGH"]
+                if len(drift_features) > 3
+                else ALERT_LEVELS["MEDIUM"]
+            )
 
         # 3. Class Imbalance Drift Detection
-        current_fraud_rate = current_df['Class'].mean()
+        current_fraud_rate = current_df["Class"].mean()
         baseline_fraud_rate = reference_info["fraud_rate"]
 
-        fraud_rate_drift = abs(current_fraud_rate - baseline_fraud_rate) / (baseline_fraud_rate + 1e-6)
+        fraud_rate_drift = abs(current_fraud_rate - baseline_fraud_rate) / (
+            baseline_fraud_rate + 1e-6
+        )
 
         if fraud_rate_drift > MONITORING_CONFIG["drift_threshold"]:
             drift_results["drift_detected"] = True
@@ -161,7 +176,9 @@ def detect_data_drift_task(reference_info: dict, current_data_path: str = "data/
         drift_results["drift_details"]["baseline_fraud_rate"] = baseline_fraud_rate
 
         if drift_results["drift_detected"]:
-            print(f"⚠️ {drift_results['drift_type']} detected - Alert level: {drift_results['alert_level']}")
+            print(
+                f"⚠️ {drift_results['drift_type']} detected - Alert level: {drift_results['alert_level']}"
+            )
         else:
             print("✅ No significant data drift detected")
 
@@ -192,7 +209,7 @@ def load_production_model_task():
             "model": model,
             "model_name": "fraud-detector",
             "stage": "Production",
-            "load_timestamp": datetime.now().isoformat()
+            "load_timestamp": datetime.now().isoformat(),
         }
 
         print("✅ Production model loaded successfully")
@@ -204,7 +221,9 @@ def load_production_model_task():
 
 
 @task(name="evaluate_model_performance")
-def evaluate_model_performance_task(model_info: dict, evaluation_data_path: str = "data/processed/test.csv"):
+def evaluate_model_performance_task(
+    model_info: dict, evaluation_data_path: str = "data/processed/test.csv"
+):
     """
     Evaluate current model performance on recent data.
     Compare against baseline performance metrics.
@@ -214,25 +233,32 @@ def evaluate_model_performance_task(model_info: dict, evaluation_data_path: str 
     try:
         # Load evaluation data
         eval_df = pd.read_csv(evaluation_data_path)
-        X_eval = eval_df.drop('Class', axis=1)
-        y_eval = eval_df['Class']
+        X_eval = eval_df.drop("Class", axis=1)
+        y_eval = eval_df["Class"]
 
         # Use our comprehensive evaluation
         model_path = "models/latest_model.pkl"  # Temporary file for evaluation
         import joblib
+
         joblib.dump(model_info["model"], model_path)
 
         evaluator = ModelEvaluator(model_path, "model_monitoring")
-        evaluation_results = evaluator.evaluate_model(X_eval, y_eval, "production_monitoring")
+        evaluation_results = evaluator.evaluate_model(
+            X_eval, y_eval, "production_monitoring"
+        )
 
         # Load baseline metrics for comparison
         baseline_metrics = {}
         try:
-            with open(MONITORING_CONFIG["baseline_stats_path"], 'r') as f:
+            with open(MONITORING_CONFIG["baseline_stats_path"], "r") as f:
                 baseline = json.load(f)
                 # This would contain reference metrics from training
         except:
-            baseline_metrics = {"auc_roc": 0.85, "precision": 0.8, "recall": 0.75}  # Default baselines
+            baseline_metrics = {
+                "auc_roc": 0.85,
+                "precision": 0.8,
+                "recall": 0.75,
+            }  # Default baselines
 
         # Check for performance decay
         current_metrics = evaluation_results["metrics"]
@@ -258,7 +284,7 @@ def evaluate_model_performance_task(model_info: dict, evaluation_data_path: str 
             "retraining_required": significant_decay,
             "baseline_metrics": baseline_metrics,
             "current_metrics": current_metrics,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         if significant_decay:
@@ -294,59 +320,83 @@ def generate_monitoring_report_task(drift_results: dict, performance_analysis: d
         "model_performance": {
             "current_metrics": performance_analysis.get("current_metrics", {}),
             "performance_decay": performance_analysis.get("performance_decay", {}),
-            "retraining_required": performance_analysis.get("retraining_required", False)
+            "retraining_required": performance_analysis.get(
+                "retraining_required", False
+            ),
         },
         "summary": {
             "data_drift_detected": drift_results.get("drift_detected", False),
-            "performance_decay_detected": performance_analysis.get("significant_decay", False),
-            "highest_alert_level": ALERT_LEVELS["LOW"]
-        }
+            "performance_decay_detected": performance_analysis.get(
+                "significant_decay", False
+            ),
+            "highest_alert_level": ALERT_LEVELS["LOW"],
+        },
     }
 
     # Determine overall status and generate alerts
-    if drift_results.get("drift_detected") or performance_analysis.get("significant_decay"):
+    if drift_results.get("drift_detected") or performance_analysis.get(
+        "significant_decay"
+    ):
         report["overall_status"] = "WARNING"
         report["summary"]["highest_alert_level"] = ALERT_LEVELS["HIGH"]
 
         if drift_results.get("drift_detected"):
-            report["alerts"].append({
-                "type": "DATA_DRIFT",
-                "severity": drift_results.get("alert_level", ALERT_LEVELS["MEDIUM"]),
-                "description": f"{drift_results.get('drift_type')} detected",
-                "details": drift_results.get("drift_details", {})
-            })
+            report["alerts"].append(
+                {
+                    "type": "DATA_DRIFT",
+                    "severity": drift_results.get(
+                        "alert_level", ALERT_LEVELS["MEDIUM"]
+                    ),
+                    "description": f"{drift_results.get('drift_type')} detected",
+                    "details": drift_results.get("drift_details", {}),
+                }
+            )
 
         if performance_analysis.get("significant_decay"):
-            report["alerts"].append({
-                "type": "PERFORMANCE_DECAY",
-                "severity": performance_analysis.get("alert_level", ALERT_LEVELS["HIGH"]),
-                "description": "Model performance has degraded significantly",
-                "details": performance_analysis.get("performance_decay", {})
-            })
+            report["alerts"].append(
+                {
+                    "type": "PERFORMANCE_DECAY",
+                    "severity": performance_analysis.get(
+                        "alert_level", ALERT_LEVELS["HIGH"]
+                    ),
+                    "description": "Model performance has degraded significantly",
+                    "details": performance_analysis.get("performance_decay", {}),
+                }
+            )
 
     # Generate recommendations
     if report["model_performance"]["retraining_required"]:
-        report["recommendations"].append({
-            "action": "RETRAIN_MODEL",
-            "priority": "HIGH",
-            "description": "Trigger automated retraining pipeline due to performance decay",
-            "reason": performance_analysis.get("performance_decay", {})
-        })
+        report["recommendations"].append(
+            {
+                "action": "RETRAIN_MODEL",
+                "priority": "HIGH",
+                "description": "Trigger automated retraining pipeline due to performance decay",
+                "reason": performance_analysis.get("performance_decay", {}),
+            }
+        )
 
-    if drift_results.get("drift_detected") and drift_results["alert_level"] == ALERT_LEVELS["CRITICAL"]:
-        report["recommendations"].append({
-            "action": "UPDATE_DATA_SCHEMA",
-            "priority": "CRITICAL",
-            "description": "Data schema has changed - review data pipeline and preprocessing",
-            "reason": drift_results.get("drift_details", {})
-        })
+    if (
+        drift_results.get("drift_detected")
+        and drift_results["alert_level"] == ALERT_LEVELS["CRITICAL"]
+    ):
+        report["recommendations"].append(
+            {
+                "action": "UPDATE_DATA_SCHEMA",
+                "priority": "CRITICAL",
+                "description": "Data schema has changed - review data pipeline and preprocessing",
+                "reason": drift_results.get("drift_details", {}),
+            }
+        )
 
     # Save report to file
     reports_dir = Path(MONITORING_CONFIG["monitoring_logs_path"])
     reports_dir.mkdir(exist_ok=True)
 
-    report_file = reports_dir / f"monitoring_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-    with open(report_file, 'w') as f:
+    report_file = (
+        reports_dir
+        / f"monitoring_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    )
+    with open(report_file, "w") as f:
         json.dump(report, f, indent=2, default=str)
 
     report["report_path"] = str(report_file)
@@ -367,11 +417,17 @@ def send_alerts_task(monitoring_report: dict):
     print("📢 Processing alerts...")
 
     alerts_sent = []
-    critical_alerts = [alert for alert in monitoring_report.get("alerts", [])
-                      if alert["severity"] == ALERT_LEVELS["CRITICAL"]]
+    critical_alerts = [
+        alert
+        for alert in monitoring_report.get("alerts", [])
+        if alert["severity"] == ALERT_LEVELS["CRITICAL"]
+    ]
 
-    high_alerts = [alert for alert in monitoring_report.get("alerts", [])
-                  if alert["severity"] == ALERT_LEVELS["HIGH"]]
+    high_alerts = [
+        alert
+        for alert in monitoring_report.get("alerts", [])
+        if alert["severity"] == ALERT_LEVELS["HIGH"]
+    ]
 
     if critical_alerts or high_alerts:
         alert_summary = {
@@ -380,7 +436,7 @@ def send_alerts_task(monitoring_report: dict):
             "high_alerts": len(high_alerts),
             "overall_status": monitoring_report["overall_status"],
             "timestamp": datetime.now().isoformat(),
-            "recipient": MONITORING_CONFIG["alert_email"]
+            "recipient": MONITORING_CONFIG["alert_email"],
         }
 
         alerts_sent.append(alert_summary)
@@ -395,7 +451,9 @@ def send_alerts_task(monitoring_report: dict):
 
 
 @task(name="store_monitoring_logs")
-def store_monitoring_logs_task(monitoring_report: dict, drift_results: dict, performance_analysis: dict):
+def store_monitoring_logs_task(
+    monitoring_report: dict, drift_results: dict, performance_analysis: dict
+):
     """
     Store monitoring logs and metrics for historical analysis.
     This data can be used for trend analysis and automated decision making.
@@ -415,13 +473,15 @@ def store_monitoring_logs_task(monitoring_report: dict, drift_results: dict, per
             "data_drift_detected": drift_results.get("drift_detected"),
             "performance_issues": performance_analysis.get("significant_decay"),
             "alerts_count": len(monitoring_report.get("alerts", [])),
-            "recommendations_count": len(monitoring_report.get("recommendations", []))
-        }
+            "recommendations_count": len(monitoring_report.get("recommendations", [])),
+        },
     }
 
     # Create log file with timestamp
-    log_file = logs_dir / f"monitoring_log_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-    with open(log_file, 'w') as f:
+    log_file = (
+        logs_dir / f"monitoring_log_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    )
+    with open(log_file, "w") as f:
         json.dump(monitoring_log, f, indent=2, default=str)
 
     print(f"✅ Monitoring logs stored: {log_file}")
@@ -430,11 +490,13 @@ def store_monitoring_logs_task(monitoring_report: dict, drift_results: dict, per
 
 
 # Main monitoring flow according to Google MLOps whitepaper
-@flow(name="Continuous Monitoring Pipeline",
-      description="Automated model and data monitoring for drift detection and performance tracking")
+@flow(
+    name="Continuous Monitoring Pipeline",
+    description="Automated model and data monitoring for drift detection and performance tracking",
+)
 def monitoring_pipeline(
     trigger_type: str = "scheduled",
-    evaluation_data_path: str = "data/processed/test.csv"
+    evaluation_data_path: str = "data/processed/test.csv",
 ):
     """
     Continuous Monitoring Pipeline implementing the Google MLOps whitepaper continuous monitoring process.
@@ -464,16 +526,22 @@ def monitoring_pipeline(
 
         # Load and evaluate production model
         model_info = load_production_model_task()
-        performance_analysis = evaluate_model_performance_task(model_info, evaluation_data_path)
+        performance_analysis = evaluate_model_performance_task(
+            model_info, evaluation_data_path
+        )
 
         # Generate comprehensive report
-        monitoring_report = generate_monitoring_report_task(drift_results, performance_analysis)
+        monitoring_report = generate_monitoring_report_task(
+            drift_results, performance_analysis
+        )
 
         # Send alerts if needed
         alerts_sent = send_alerts_task(monitoring_report)
 
         # Store monitoring logs
-        log_file = store_monitoring_logs_task(monitoring_report, drift_results, performance_analysis)
+        log_file = store_monitoring_logs_task(
+            monitoring_report, drift_results, performance_analysis
+        )
 
         # Summary
         pipeline_summary = {
@@ -485,7 +553,7 @@ def monitoring_pipeline(
             "data_drift_detected": drift_results["drift_detected"],
             "retraining_required": performance_analysis["retraining_required"],
             "monitoring_report_path": monitoring_report["report_path"],
-            "log_file_path": log_file
+            "log_file_path": log_file,
         }
 
         print("🎉 Monitoring Pipeline completed!")
@@ -510,7 +578,10 @@ def schedule_monitoring(interval_hours: int = 24):
     pass
 
 
-def trigger_retraining_if_needed(monitoring_result: dict, retraining_pipeline_path: str = "pipelines/training_pipeline.py"):
+def trigger_retraining_if_needed(
+    monitoring_result: dict,
+    retraining_pipeline_path: str = "pipelines/training_pipeline.py",
+):
     """
     Trigger retraining pipeline if monitoring indicates it's needed.
     This would integrate with the continuous training system.
@@ -519,10 +590,12 @@ def trigger_retraining_if_needed(monitoring_result: dict, retraining_pipeline_pa
         print("🔄 Triggering retraining due to monitoring results...")
         # Execute retraining pipeline
         import subprocess
-        result = subprocess.run([
-            "python", retraining_pipeline_path,
-            "monitoring_trigger"
-        ], capture_output=True, text=True)
+
+        result = subprocess.run(
+            ["python", retraining_pipeline_path, "monitoring_trigger"],
+            capture_output=True,
+            text=True,
+        )
 
         if result.returncode == 0:
             print("✅ Retraining triggered successfully")
