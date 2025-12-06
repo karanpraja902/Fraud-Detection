@@ -57,13 +57,28 @@ python retrain_and_serve.py
 # Web interface available at http://localhost:3000
 ```
 
-### 🌐 Web Interface
-The web interface provides a user-friendly way to test fraud detection:
+### 🌐 Web Interface & Authentication
+The system includes a professional web interface with authentication:
 
+#### **🔐 Authentication**
+- **Session-based login system** with multiple demo accounts
+- **Secure access control** for all fraud detection features
+- **Role-based permissions** (admin/user access levels)
+
+#### **💻 Web Interface Features**
 1. **Simple Form**: Only requires Transaction Time and Amount
-2. **Smart Backend**: Automatically uses representative sample data for advanced features
-3. **Real-time Results**: Instant analysis with confidence scores
-4. **Visual Feedback**: Clear indicators for normal vs fraudulent transactions
+2. **Real-time Validation**: Green/red feedback as you type
+3. **Smart Backend**: Automatically uses representative sample data
+4. **Visual Results**: Instant analysis with confidence scores and bars
+5. **Professional UI**: Modern, responsive design for all devices
+6. **Loading States**: Real-time feedback during processing
+
+#### **🎯 Demo Accounts**
+```
+Username: demo     / Password: demo     (Regular User)
+Username: admin    / Password: admin    (Administrator)
+Username: user     / Password: password (Regular User)
+```
 
 ### 🧪 Test the API
 ```bash
