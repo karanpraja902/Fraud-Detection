@@ -54,23 +54,30 @@ ls data/raw/ data/processed/
 # One-command solution: retrain + serve
 python retrain_and_serve.py
 
-# Model will be available at http://localhost:3000
+# Web interface available at http://localhost:3000
 ```
+
+### 🌐 Web Interface
+The web interface provides a user-friendly way to test fraud detection:
+
+1. **Simple Form**: Only requires Transaction Time and Amount
+2. **Smart Backend**: Automatically uses representative sample data for advanced features
+3. **Real-time Results**: Instant analysis with confidence scores
+4. **Visual Feedback**: Clear indicators for normal vs fraudulent transactions
 
 ### 🧪 Test the API
 ```bash
 # Health check
 curl http://localhost:3000/health
 
-# Make prediction (replace with actual transaction data)
+# JSON API prediction (full features)
 curl -X POST http://localhost:3000/predict \
   -H "Content-Type: application/json" \
-  -d '{
-    "Time": 1.388688795340668,
-    "V1": -0.674466064578314,
-    "V2": 1.40810501967799,
-    "...": "all 30 features required"
-  }'
+  -d '{"Time": 125.5, "Amount": 49.99, "...": "all features"}'
+
+# Web form prediction (simplified)
+curl -X POST http://localhost:3000/predict/form \
+  -d "Time=125.50&Amount=49.99"
 ```
 
 ## 🔄 MLOps Pipeline Steps

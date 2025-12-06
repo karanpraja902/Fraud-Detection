@@ -80,7 +80,7 @@ def train_model(train_path: str = DATA_PATH):
             # Optimize recall (important for fraud detection)
             return val_recall
 
-    with mlflow.start_run(run_name="wkd-rn"):
+    with mlflow.start_run(run_name="live-demo"):
         mlflow.set_tag("task", "fraud_detection")
         mlflow.set_tag("framework", "scikit-learn")
         mlflow.set_tag("optimizer", "optuna")
