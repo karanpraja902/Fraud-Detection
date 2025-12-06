@@ -4,7 +4,7 @@ Implements the training operationalization and continuous training processes
 from Google MLOps whitepaper with data validation, training, evaluation, and registration.
 """
 
-from prefect import task, flow, get_run_context
+from prefect import task, flow
 import pandas as pd
 import numpy as np
 from pathlib import Path

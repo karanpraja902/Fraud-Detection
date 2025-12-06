@@ -17,7 +17,7 @@ warnings.filterwarnings("ignore")
 
 # Add src to path to import our modules
 sys.path.append("src")
-from models.evaluate import ModelEvaluator, evaluate_and_monitor
+from models.evaluate import ModelEvaluator
 from models.train import load_data
 
 # Configuration

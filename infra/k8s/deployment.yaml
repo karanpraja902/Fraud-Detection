@@ -1,0 +1,273 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: fraud-detection
+  labels:
+    name: fraud-detection
+    app: fraud-detector
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fraud-detector-config
+  namespace: fraud-detection
+data:
+  # MLflow configuration
+  MLFLOW_TRACKING_URI: "https://dagshub.com/karanpraja902/Fraud-Detection.mlflow"
+  # Model registry settings
+  MODEL_NAME: "fraud-detector"
+  MODEL_STAGE: "Production"
+  # Application settings
+  PYTHONPATH: "/app"
+  BENTOML_HOME: "/app/bentoml_store"
+  # Logging
+  LOG_LEVEL: "INFO"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: fraud-detector-sa
+  namespace: fraud-detection
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fraud-detector
+  namespace: fraud-detection
+  labels:
+    app: fraud-detector
+    version: v1
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: fraud-detector
+  template:
+    metadata:
+      labels:
+        app: fraud-detector
+        version: v1
+    spec:
+      serviceAccountName: fraud-detector-sa
+      containers:
+      - name: fraud-detector
+        image: fraud-detection:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+          name: http
+          protocol: TCP
+        env:
+        - name: MLFLOW_TRACKING_URI
+          valueFrom:
+            configMapKeyRef:
+              name: fraud-detector-config
+              key: MLFLOW_TRACKING_URI
+        - name: MODEL_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: fraud-detector-config
+              key: MODEL_NAME
+        - name: MODEL_STAGE
+          valueFrom:
+            configMapKeyRef:
+              name: fraud-detector-config
+              key: MODEL_STAGE
+        - name: PYTHONPATH
+          valueFrom:
+            configMapKeyRef:
+              name: fraud-detector-config
+              key: PYTHONPATH
+        - name: BENTOML_HOME
+          valueFrom:
+            configMapKeyRef:
+              name: fraud-detector-config
+              key: BENTOML_HOME
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: fraud-detector-config
+              key: LOG_LEVEL
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+      securityContext:
+        fsGroup: 1000
+      # Add tolerations for specific node types if needed
+      # tolerations:
+      # - key: "dedicated"
+      #   operator: "Equal"
+      #   value: "ml-workload"
+      #   effect: "NoSchedule"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fraud-detector-service
+  namespace: fraud-detection
+  labels:
+    app: fraud-detector
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  selector:
+    app: fraud-detector
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: fraud-detector-ingress
+  namespace: fraud-detection
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - fraud-detection.karanpraja902.local
+    secretName: fraud-detector-tls
+  rules:
+  - host: fraud-detection.karanpraja902.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: fraud-detector-service
+            port:
+              number: 80
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: fraud-detector-hpa
+  namespace: fraud-detection
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: fraud-detector
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 60
+      - type: Pods
+        value: 2
+        periodSeconds: 60
+      selectPolicy: Max
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: fraud-detector-pdb
+  namespace: fraud-detection
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: fraud-detector
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: fraud-detection
+data:
+  nginx.conf: |
+    events {
+      worker_connections 1024;
+    }
+    http {
+      upstream fraud_detector_backend {
+        least_conn;
+        server fraud-detector-service:80;
+      }
+      server {
+        listen 80;
+        location / {
+          proxy_pass http://fraud_detector_backend;
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $scheme;
+
+          # Timeout settings
+          proxy_connect_timeout 30s;
+          proxy_send_timeout 30s;
+          proxy_read_timeout 30s;
+
+          # Buffer settings for ML requests
+          proxy_buffering on;
+          proxy_buffer_size 4k;
+          proxy_buffers 8 4k;
+        }
+        location /healthz {
+          proxy_pass http://fraud_detector_backend/healthz;
+          access_log off;
+        }
+      }
+    }

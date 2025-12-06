@@ -1,12 +1,13 @@
 pandas
-scikit-learn
+scikit-learn==1.3.0
 imbalanced-learn
-mlflow
+mlflow[extras]
 prefect
 dvc[s3]
-bentoml
 evidently
 prometheus-client
 grafana-api
 pytest
 flake8
+flask
+requests

@@ -1,46 +1,27 @@
-import bentoml
-from bentoml.io import JSON
-import mlflow
+#!/usr/bin/env python3
+"""
+DEPRECATED: This file contains the old BentoML serving approach.
 
+🚨 IMPORTANT: This approach has been replaced by retrain_and_serve.py
 
-# Load the latest MLflow model (version 4) from local mlruns artifacts
-model_name = "fraud-detector"
-model_version = 4
-mlflow_model_uri = f"runs:/{model_name}/{model_version}"
+For the simplest way to serve your fraud detection model, use:
 
-# MLflow local path for the latest model
-mlflow_model_uri = "mlruns/902899545813332380/5509992e7a08492db5bdaecc787a3d52/artifacts/best_model"
+    python retrain_and_serve.py
 
-# Import MLflow model into BentoML
-bentoml_model = bentoml.mlflow.import_model(
-    name=model_name,
-    model_uri=mlflow_model_uri,
-)
+This new approach:
+- ✅ Retrains a compatible model with current sklearn version
+- ✅ Starts a Flask REST API server
+- ✅ Bypasses MLflow/BentoML version compatibility issues
+- ✅ Provides real-time predictions at http://localhost:3000
 
-# Create a BentoML runner for the imported model
-runner = bentoml_model.to_runner()
+Old BentoML code (kept for reference):
+"""
 
-# Define the BentoML service
-svc = bentoml.Service(name="fraud_detector_service", runners=[runner])
+# import bentoml
+# from bentoml.io import JSON
+# import mlflow
 
+# # ... old BentoML implementation removed ...
 
-@svc.api(input=JSON(), output=JSON())
-async def predict(input_json):
-    """
-    Expects input_json as a dictionary with features for fraud detection.
-    Returns fraud probabilities.
-    """
-    # The model expects a list of records; wrap input in a list if it's a single record
-    if isinstance(input_json, dict):
-        input_data = [input_json]
-    else:
-        input_data = input_json
-
-    preds = await runner.predict.async_run(input_data)
-    return {"fraud_probabilities": preds}
-
-
-if __name__ == "__main__":
-    # Save the BentoML service to generate build artifacts
-    saved_path = svc.save()
-    print(f"BentoML service saved to: {saved_path}")
+print("🚨 DEPRECATED: Use 'python retrain_and_serve.py' instead")
+print("📖 See README.md for the new serving approach")

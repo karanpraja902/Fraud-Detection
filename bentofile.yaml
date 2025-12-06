@@ -1,11 +1,13 @@
-service: "src.models.serve:FraudDetector"
+# Updated to use the retrain_and_serve.py approach
+# This file is kept for BentoML compatibility but we now use direct Flask serving
+service: "retrain_and_serve:app"
 labels:
   owner: ml-team
   project: fraud-detection
 include:
-- "src/models/serve.py"
+- "retrain_and_serve.py"
 python:
   packages:
-    - scikit-learn
+    - scikit-learn==1.3.0
     - pandas
-    - mlflow
+    - flask

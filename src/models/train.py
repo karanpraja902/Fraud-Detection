@@ -1,6 +1,5 @@
 import mlflow
 import mlflow.sklearn
-from mlflow.models import infer_signature
 import optuna
 import pandas as pd
 from pathlib import Path
@@ -93,8 +92,12 @@ def train_model(train_path: str = DATA_PATH):
         mlflow.log_params(best_params)
         mlflow.log_metric("best_recall", study.best_value)
 
+        # Separate model parameters from threshold (threshold is for prediction, not model init)
+        model_params = {k: v for k, v in best_params.items() if k != 'threshold'}
+        optimal_threshold = best_params['threshold']
+
         best_model = RandomForestClassifier(
-            **best_params, random_state=RANDOM_STATE, n_jobs=-1
+            **model_params, random_state=RANDOM_STATE, n_jobs=-1
         )
         best_model.fit(X_trainval, y_trainval)
 
@@ -143,14 +146,12 @@ def train_model(train_path: str = DATA_PATH):
         mlflow.log_artifact("pr_curve.png")
         plt.close()
 
-        signature = infer_signature(X_trainval, best_model.predict(X_trainval))
         input_example = X_trainval.iloc[:5]
         mlflow.sklearn.log_model(
             sk_model=best_model,
             artifact_path="best_model",
             registered_model_name="fraud-detector",
-            input_example=input_example,
-            signature=signature
+            input_example=input_example
         )
         print("Best trial params:", best_params)
         print("Best recall:", study.best_value)
