@@ -18,6 +18,10 @@
                     Model Status: {{ 'Active' if model_loaded else 'Inactive' }}
                 </div>
                 <div class="user-info">
+                    <button id="themeToggle" class="theme-toggle" title="Toggle Dark Mode">
+                        <i class="fas fa-moon"></i>
+                        <i class="fas fa-sun"></i>
+                    </button>
                     <span class="user-welcome">
                         <i class="fas fa-user"></i> Welcome, {{ user }}!
                         {% if role == 'admin' %}
