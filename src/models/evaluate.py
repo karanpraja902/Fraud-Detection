@@ -15,6 +15,7 @@ import mlflow.sklearn
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from sklearn.base import BaseEstimator
 from sklearn.metrics import (
     auc,
     average_precision_score,
@@ -55,7 +56,7 @@ class ModelEvaluator:
         """
         self.model_path = Path(model_path)
         self.experiment_name = experiment_name
-        self.model: Optional[Any] = None
+        self.model: Optional[BaseEstimator] = None
 
         # Set MLflow experiment
         mlflow.set_experiment(experiment_name)
@@ -69,6 +70,18 @@ class ModelEvaluator:
         except Exception as e:
             print(f"Error loading model: {e}")
             return False
+
+    @property
+    def _safe_model(self) -> BaseEstimator:
+        """Get model with runtime safety and type narrowing"""
+        if self.model is None:
+            if not self.load_model():
+                raise ValueError("Model could not be loaded")
+        # Type narrowing for mypy + runtime safety
+        model = self.model
+        if model is None:
+            raise ValueError("Model is unexpectedly None after loading")
+        return model
 
     def evaluate_model(
         self,
@@ -104,9 +117,10 @@ class ModelEvaluator:
 
         with mlflow.start_run(run_name=f"evaluation_{dataset_name}"):
 
-            # Basic predictions
-            y_pred_proba = self.model.predict_proba(X)[:, 1]
-            y_pred = self.model.predict(X)
+            # Basic predictions - use safe model property
+            model = self._safe_model
+            y_pred_proba = model.predict_proba(X)[:, 1]
+            y_pred = model.predict(X)
 
             # Classification metrics
             results["metrics"] = self._compute_classification_metrics(
@@ -178,7 +192,7 @@ class ModelEvaluator:
         try:
             cv = StratifiedKFold(n_splits=cv_folds, shuffle=True, random_state=42)
             cv_predictions = cross_val_predict(
-                self.model, X, y, cv=cv, method="predict_proba"
+                self._safe_model, X, y, cv=cv, method="predict_proba"
             )
 
             # CV metrics
@@ -303,9 +317,10 @@ class ModelEvaluator:
         """Analyze feature importance if available."""
         importance_data = {}
 
-        if hasattr(self.model, "feature_importances_"):
+        model = self._safe_model
+        if hasattr(model, "feature_importances_"):
             # For tree-based models
-            importance = self.model.feature_importances_
+            importance = model.feature_importances_
             feature_names = X.columns
 
             # Sort by importance
@@ -327,12 +342,12 @@ class ModelEvaluator:
             plt.close()
             importance_data["plot_path"] = str(feature_plot_path)
 
-        elif hasattr(self.model, "coef_"):
+        elif hasattr(model, "coef_"):
             # For linear models
             coefficients = (
-                self.model.coef_[0]
-                if len(self.model.coef_.shape) > 1
-                else self.model.coef_
+                model.coef_[0]
+                if len(model.coef_.shape) > 1
+                else model.coef_
             )
             feature_names = X.columns
 
@@ -449,7 +464,8 @@ def find_optimal_threshold(
     # Load model and get probabilities
     evaluator = ModelEvaluator()
     evaluator.load_model()
-    y_val_proba = evaluator.model.predict_proba(X_val)[:, 1]
+    model = evaluator._safe_model
+    y_val_proba = model.predict_proba(X_val)[:, 1]
 
     # Find optimal threshold
     thresholds = np.arange(0.1, 0.9, 0.05)
@@ -461,9 +477,9 @@ def find_optimal_threshold(
         current_f1 = f1_score(y_val, y_pred)
         if current_f1 > best_f1:
             best_f1 = current_f1
-            best_threshold = thresh
+            best_threshold = float(thresh)
 
-    return best_threshold
+    return float(best_threshold)
 
 
 if __name__ == "__main__":
