@@ -4,17 +4,27 @@ Retrains the model with current sklearn version and serves it.
 This resolves version compatibility issues.
 """
 
-import pandas as pd
-import numpy as np
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import classification_report, roc_auc_score
-import joblib
-from flask import Flask, request, jsonify, render_template, redirect, url_for, session, flash
 import os
 import pickle
 from functools import wraps
+
+import joblib
+import numpy as np
+import pandas as pd
+from flask import (
+    Flask,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, roc_auc_score
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 
 app = Flask(__name__)
 app.secret_key = 'fraud-detection-demo-secret-key-2025'

@@ -4,12 +4,13 @@ Simple model serving script for fraud detection.
 This bypasses MLflow version compatibility issues.
 """
 
-import joblib
-import pandas as pd
-import numpy as np
-from flask import Flask, request, jsonify
 import os
 from pathlib import Path
+
+import joblib
+import numpy as np
+import pandas as pd
+from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
