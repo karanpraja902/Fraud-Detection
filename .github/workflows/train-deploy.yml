@@ -100,6 +100,7 @@ jobs:
       run: |
         python -c "
         from pipelines.training_pipeline import data_ingestion_task, data_validation_task
+        import os
 
         # Run data ingestion and validation
         data_info = data_ingestion_task('data/raw/creditcard.csv')
@@ -108,10 +109,12 @@ jobs:
         if validation_results['is_valid']:
             print('✅ Data validation passed')
             print(f'Data drift detected: {validation_results[\"drift_detected\"]}')
-            echo 'valid=true' >> $GITHUB_OUTPUT
+            with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                f.write('valid=true\n')
         else:
             print('❌ Data validation failed')
-            echo 'valid=false' >> $GITHUB_OUTPUT
+            with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                f.write('valid=false\n')
             # Don't fail the job, just mark as invalid
         "
 
