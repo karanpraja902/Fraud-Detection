@@ -52,7 +52,7 @@ jobs:
 
     - name: Check import sorting with isort
       run: |
-        isort --check-only --diff src/ pipelines/
+        isort --check-only --diff --profile black src/ pipelines/
 
     - name: Type checking with mypy
       run: |
