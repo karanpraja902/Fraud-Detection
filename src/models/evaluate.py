@@ -6,7 +6,7 @@ Implements comprehensive model evaluation following Google MLOps whitepaper guid
 import json
 import warnings
 from pathlib import Path
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Optional, Tuple, Union
 
 import joblib
 import matplotlib.pyplot as plt
@@ -55,7 +55,7 @@ class ModelEvaluator:
         """
         self.model_path = Path(model_path)
         self.experiment_name = experiment_name
-        self.model = None
+        self.model: Optional[Any] = None
 
         # Set MLflow experiment
         mlflow.set_experiment(experiment_name)

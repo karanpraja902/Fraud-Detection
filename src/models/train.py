@@ -37,7 +37,7 @@ def load_data():
     return X, y
 
 
-def train_model(train_path: str = DATA_PATH):
+def train_model(train_path: str = str(DATA_PATH)):
     X, y = load_data()
     X_trainval, X_test, y_trainval, y_test = train_test_split(
         X, y, test_size=0.2, stratify=y, random_state=RANDOM_STATE
