@@ -75,32 +75,11 @@ jobs:
       run: |
         mkdir -p data/raw data/processed
 
-    - name: Download sample dataset (limited for CI)
+    - name: Create synthetic dataset
+      if: failure()  # Only run if Kaggle download fails
       run: |
-        # Download a sample of the credit card dataset for testing
-        pip install kaggle
-        echo "Download limited dataset for testing..."
-        # For CI, we'll create a minimal test dataset
-        python -c "
-        import pandas as pd
-        import numpy as np
-        # Create synthetic test data similar to credit card dataset
-        n_samples = 1000
-        np.random.seed(42)
-        data = {
-            'Time': np.random.uniform(0, 172800, n_samples),
-            'V1': np.random.normal(0, 1, n_samples),
-            'V2': np.random.normal(0, 1, n_samples),
-            'V3': np.random.normal(0, 1, n_samples),
-            'V4': np.random.normal(0, 1, n_samples),
-            'V5': np.random.normal(0, 1, n_samples),
-            'Amount': np.random.exponential(100, n_samples),
-            'Class': np.random.choice([0, 1], n_samples, p=[0.998, 0.002])
-        }
-        df = pd.DataFrame(data)
-        df.to_csv('data/raw/creditcard.csv', index=False)
-        print('Test dataset created')
-        "
+        echo "Creating synthetic dataset for CI testing..."
+        python scripts/create_test_dataset.py
 
     - name: Cache pip dependencies
       uses: actions/cache@v3
