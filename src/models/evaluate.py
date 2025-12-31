@@ -3,29 +3,24 @@ Model evaluation module for fraud detection system.
 Implements comprehensive model evaluation following Google MLOps whitepaper guidelines.
 """
 
+import json
+import warnings
+from pathlib import Path
+from typing import Any, Dict, Tuple
+
 import joblib
+import matplotlib.pyplot as plt
 import mlflow
 import mlflow.sklearn
-import pandas as pd
 import numpy as np
-from pathlib import Path
-from sklearn.metrics import (
-    classification_report,
-    confusion_matrix,
-    roc_curve,
-    auc,
-    precision_recall_curve,
-    average_precision_score,
-    f1_score,
-    precision_score,
-    recall_score,
-)
-from sklearn.model_selection import cross_val_predict, StratifiedKFold, train_test_split
-import matplotlib.pyplot as plt
+import pandas as pd
 import seaborn as sns
-import json
-from typing import Dict, Tuple, Any
-import warnings
+from sklearn.metrics import (auc, average_precision_score,
+                             classification_report, confusion_matrix, f1_score,
+                             precision_recall_curve, precision_score,
+                             recall_score, roc_curve)
+from sklearn.model_selection import (StratifiedKFold, cross_val_predict,
+                                     train_test_split)
 
 warnings.filterwarnings("ignore")
 

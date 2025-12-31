@@ -1,21 +1,15 @@
+from pathlib import Path
+
+import matplotlib.pyplot as plt
 import mlflow
 import mlflow.sklearn
 import optuna
 import pandas as pd
-from pathlib import Path
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import (
-    roc_auc_score,
-    precision_score,
-    recall_score,
-    f1_score,
-    roc_curve,
-    precision_recall_curve,
-    confusion_matrix,
-    ConfusionMatrixDisplay,
-)
+from sklearn.metrics import (ConfusionMatrixDisplay, confusion_matrix,
+                             f1_score, precision_recall_curve, precision_score,
+                             recall_score, roc_auc_score, roc_curve)
 from sklearn.model_selection import train_test_split
-import matplotlib.pyplot as plt
 
 # -----------------------------
 # Config

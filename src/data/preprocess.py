@@ -1,8 +1,8 @@
 import pandas as pd
+from imblearn.over_sampling import SMOTE
+from imblearn.under_sampling import RandomUnderSampler
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from imblearn.under_sampling import RandomUnderSampler
-from imblearn.over_sampling import SMOTE
 
 
 def load_data(path: str) -> pd.DataFrame:

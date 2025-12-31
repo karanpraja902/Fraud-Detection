@@ -4,14 +4,15 @@ Implements the Continuous Monitoring process from Google MLOps whitepaper.
 Handles data drift detection, model performance monitoring, and alerting.
 """
 
-from prefect import task, flow
-import pandas as pd
-import numpy as np
-from pathlib import Path
 import json
 import sys
-from datetime import datetime, timedelta
 import warnings
+from datetime import datetime, timedelta
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+from prefect import flow, task
 
 warnings.filterwarnings("ignore")
 
@@ -199,8 +200,8 @@ def load_production_model_task():
     print("📤 Loading production model...")
 
     try:
-        import mlflow.pyfunc
         import mlflow
+        import mlflow.pyfunc
 
         # Load latest production model from registry
         model = mlflow.pyfunc.load_model("models:/fraud-detector/Production")

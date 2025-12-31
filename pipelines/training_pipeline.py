@@ -4,31 +4,29 @@ Implements the training operationalization and continuous training processes
 from Google MLOps whitepaper with data validation, training, evaluation, and registration.
 """
 
-from prefect import task, flow
-import pandas as pd
-import numpy as np
-from pathlib import Path
-import sys
 import json
+import sys
+import warnings
 from datetime import datetime, timedelta
-from sklearn.model_selection import train_test_split
+from pathlib import Path
+
 import joblib
 import mlflow
 import mlflow.sklearn
-import warnings
+import numpy as np
+import pandas as pd
+from prefect import flow, task
+from sklearn.model_selection import train_test_split
 
 warnings.filterwarnings("ignore")
 
 # Add src to path to import our modules
 sys.path.append("src")
-from data.preprocess import (
-    run_preprocessing,
-    load_data,
-    normalize_features,
-    handle_imbalance,
-)
-from models.train import train_model, load_data as load_processed_data
+from data.preprocess import (handle_imbalance, load_data, normalize_features,
+                             run_preprocessing)
 from models.evaluate import ModelEvaluator, evaluate_and_monitor
+from models.train import load_data as load_processed_data
+from models.train import train_model
 
 # Configuration
 DATA_CONFIG = {
@@ -359,8 +357,8 @@ def model_registration_task(training_results: dict, validation_results: dict):
 
     with mlflow.start_run():
         # Log model with signature
-        from mlflow.models import infer_signature
         import pandas as pd
+        from mlflow.models import infer_signature
 
         # Get sample for signature
         sample_df = pd.read_csv(f"{DATA_CONFIG['processed_data_path']}/test.csv")

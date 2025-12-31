@@ -3,17 +3,18 @@ Deployment Pipeline for Fraud Detection MLOps System.
 Implements automated deployment to Kubernetes with canary releases and rollbacks.
 """
 
-from prefect import task, flow
-import subprocess
-import os
-import sys
-from pathlib import Path
-from datetime import datetime
-import yaml
 import json
+import os
+import subprocess
+import sys
 import time
-import requests
+from datetime import datetime
+from pathlib import Path
 from typing import Dict, Optional
+
+import requests
+import yaml
+from prefect import flow, task
 
 # Configuration
 DEPLOYMENT_CONFIG = {
