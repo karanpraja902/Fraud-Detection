@@ -82,13 +82,24 @@ def create_synthetic_dataset(output_path='data/raw/creditcard.csv', n_samples=10
     return df
 
 if __name__ == "__main__":
-    # Default parameters match the original dataset characteristics
-    df = create_synthetic_dataset()
+    import argparse
+
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Create synthetic credit card fraud dataset')
+    parser.add_argument('--samples', type=int, default=10000,
+                       help='Number of samples to generate (default: 10000)')
+    parser.add_argument('--output', type=str, default='data/raw/creditcard.csv',
+                       help='Output file path (default: data/raw/creditcard.csv)')
+
+    args = parser.parse_args()
+
+    # Create dataset with specified parameters
+    df = create_synthetic_dataset(n_samples=args.samples, output_path=args.output)
 
     # Quick validation
-    assert len(df) == 10000, "Incorrect number of samples"
+    assert len(df) == args.samples, f"Incorrect number of samples: expected {args.samples}, got {len(df)}"
     assert 'Class' in df.columns, "Missing Class column"
     assert df['Class'].nunique() == 2, "Should have binary classification"
     assert df['Class'].sum() > 0, "Should have at least some fraud cases"
 
-    print("\n✅ Dataset validation passed!")
+    print(f"\n✅ Dataset validation passed for {args.samples} samples!")

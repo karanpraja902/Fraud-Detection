@@ -89,52 +89,9 @@ jobs:
           ls -la data/raw/
           echo "Dataset downloaded from Kaggle"
         else
-          echo "Kaggle credentials not found - creating synthetic dataset for demo"
-          # Create larger synthetic dataset for training
-          python -c "
-          import pandas as pd
-          import numpy as np
-          np.random.seed(42)
-
-          # Generate synthetic credit card data
-          n_samples = 100000  # Larger dataset for training
-          data = {
-              'Time': np.random.uniform(0, 172800, n_samples),
-              'V1': np.random.normal(0, 1, n_samples),
-              'V2': np.random.normal(0, 1, n_samples),
-              'V3': np.random.normal(0, 1, n_samples),
-              'V4': np.random.normal(0, 1, n_samples),
-              'V5': np.random.normal(0, 1, n_samples),
-              'V6': np.random.normal(0, 1, n_samples),
-              'V7': np.random.normal(0, 1, n_samples),
-              'V8': np.random.normal(0, 1, n_samples),
-              'V9': np.random.normal(0, 1, n_samples),
-              'V10': np.random.normal(0, 1, n_samples),
-              'V11': np.random.normal(0, 1, n_samples),
-              'V12': np.random.normal(0, 1, n_samples),
-              'V13': np.random.normal(0, 1, n_samples),
-              'V14': np.random.normal(0, 1, n_samples),
-              'V15': np.random.normal(0, 1, n_samples),
-              'V16': np.random.normal(0, 1, n_samples),
-              'V17': np.random.normal(0, 1, n_samples),
-              'V18': np.random.normal(0, 1, n_samples),
-              'V19': np.random.normal(0, 1, n_samples),
-              'V20': np.random.normal(0, 1, n_samples),
-              'V21': np.random.normal(0, 1, n_samples),
-              'V22': np.random.normal(0, 1, n_samples),
-              'V23': np.random.normal(0, 1, n_samples),
-              'V24': np.random.normal(0, 1, n_samples),
-              'V25': np.random.normal(0, 1, n_samples),
-              'V26': np.random.normal(0, 1, n_samples),
-              'V27': np.random.normal(0, 1, n_samples),
-              'V28': np.random.normal(0, 1, n_samples),
-              'Amount': np.random.exponential(100, n_samples),
-              'Class': np.random.choice([0, 1], n_samples, p=[0.998, 0.002])
-          }
-          df = pd.DataFrame(data)
-          df.to_csv('data/raw/creditcard.csv', index=False)
-          print(f'Synthetic dataset created: {len(df)} samples')
-          "
+          echo "Kaggle credentials not found - creating synthetic dataset for training"
+          # Create larger synthetic dataset for training using our script
+          python scripts/create_test_dataset.py --samples 100000
         fi
 
     - name: Data validation
