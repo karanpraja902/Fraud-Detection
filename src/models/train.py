@@ -5,7 +5,14 @@ import pandas as pd
 from pathlib import Path
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (
-    roc_auc_score, precision_score, recall_score, f1_score, roc_curve, precision_recall_curve, confusion_matrix, ConfusionMatrixDisplay
+    roc_auc_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    roc_curve,
+    precision_recall_curve,
+    confusion_matrix,
+    ConfusionMatrixDisplay,
 )
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
@@ -37,7 +44,11 @@ def train_model(train_path: str = DATA_PATH):
 
     def objective(trial):
         X_train, X_val, y_train, y_val = train_test_split(
-            X_trainval, y_trainval, test_size=0.2, stratify=y_trainval, random_state=RANDOM_STATE
+            X_trainval,
+            y_trainval,
+            test_size=0.2,
+            stratify=y_trainval,
+            random_state=RANDOM_STATE,
         )
 
         # Hyperparameters
@@ -70,12 +81,14 @@ def train_model(train_path: str = DATA_PATH):
 
             # Log trial info
             mlflow.log_params(params)
-            mlflow.log_metrics({
-                "val_auc": val_auc,
-                "val_precision": val_precision,
-                "val_recall": val_recall,
-                "val_f1": val_f1,
-            })
+            mlflow.log_metrics(
+                {
+                    "val_auc": val_auc,
+                    "val_precision": val_precision,
+                    "val_recall": val_recall,
+                    "val_f1": val_f1,
+                }
+            )
 
             # Optimize recall (important for fraud detection)
             return val_recall
@@ -93,8 +106,8 @@ def train_model(train_path: str = DATA_PATH):
         mlflow.log_metric("best_recall", study.best_value)
 
         # Separate model parameters from threshold (threshold is for prediction, not model init)
-        model_params = {k: v for k, v in best_params.items() if k != 'threshold'}
-        optimal_threshold = best_params['threshold']
+        model_params = {k: v for k, v in best_params.items() if k != "threshold"}
+        optimal_threshold = best_params["threshold"]
 
         best_model = RandomForestClassifier(
             **model_params, random_state=RANDOM_STATE, n_jobs=-1
@@ -109,12 +122,14 @@ def train_model(train_path: str = DATA_PATH):
         test_recall = recall_score(y_test, y_test_pred)
         test_f1 = f1_score(y_test, y_test_pred)
 
-        mlflow.log_metrics({
-            "test_auc": test_auc,
-            "test_precision": test_precision,
-            "test_recall": test_recall,
-            "test_f1": test_f1,
-        })
+        mlflow.log_metrics(
+            {
+                "test_auc": test_auc,
+                "test_precision": test_precision,
+                "test_recall": test_recall,
+                "test_f1": test_f1,
+            }
+        )
 
         cm = confusion_matrix(y_test, y_test_pred)
         disp = ConfusionMatrixDisplay(confusion_matrix=cm)
@@ -151,7 +166,7 @@ def train_model(train_path: str = DATA_PATH):
             sk_model=best_model,
             artifact_path="best_model",
             registered_model_name="fraud-detector",
-            input_example=input_example
+            input_example=input_example,
         )
         print("Best trial params:", best_params)
         print("Best recall:", study.best_value)

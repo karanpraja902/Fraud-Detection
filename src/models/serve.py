@@ -2,6 +2,7 @@ import bentoml
 import joblib
 import pandas as pd
 
+
 @bentoml.service(name="fraud-detector", resources={"cpu": "1"})
 class FraudDetector:
     def __init__(self):

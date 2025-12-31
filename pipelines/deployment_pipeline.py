@@ -48,7 +48,7 @@ def validate_deployment_prerequisites_task():
         "docker_credentials": False,
         "required_files": False,
         "errors": [],
-        "warnings": []
+        "warnings": [],
     }
 
     # Check Docker
@@ -64,7 +64,9 @@ def validate_deployment_prerequisites_task():
 
     # Check kubectl
     try:
-        result = subprocess.run(["kubectl", "version", "--client"], capture_output=True, text=True)
+        result = subprocess.run(
+            ["kubectl", "version", "--client"], capture_output=True, text=True
+        )
         if result.returncode == 0:
             validation_results["kubectl_available"] = True
             print("✅ kubectl available")
@@ -76,7 +78,9 @@ def validate_deployment_prerequisites_task():
     # Check Kubernetes access
     if validation_results["kubectl_available"]:
         try:
-            result = subprocess.run(["kubectl", "cluster-info"], capture_output=True, text=True, timeout=10)
+            result = subprocess.run(
+                ["kubectl", "cluster-info"], capture_output=True, text=True, timeout=10
+            )
             if result.returncode == 0:
                 validation_results["kubernetes_access"] = True
                 print("✅ Kubernetes cluster accessible")
@@ -92,14 +96,16 @@ def validate_deployment_prerequisites_task():
         validation_results["docker_credentials"] = True
         print("✅ Docker credentials available")
     else:
-        validation_results["warnings"].append("Docker credentials not found - using local registry")
+        validation_results["warnings"].append(
+            "Docker credentials not found - using local registry"
+        )
 
     # Check required files
     required_files = [
         "infra/docker/Dockerfile.serve",
         "infra/k8s/deployment.yaml",
         "bentofile.yaml",
-        "requirements.txt"
+        "requirements.txt",
     ]
 
     missing_files = []
@@ -111,14 +117,16 @@ def validate_deployment_prerequisites_task():
         validation_results["required_files"] = True
         print("✅ All required files present")
     else:
-        validation_results["errors"].extend([f"Missing file: {f}" for f in missing_files])
+        validation_results["errors"].extend(
+            [f"Missing file: {f}" for f in missing_files]
+        )
 
     # Overall validation
     is_valid = (
-        validation_results["docker_available"] and
-        validation_results["kubectl_available"] and
-        validation_results["kubernetes_access"] and
-        validation_results["required_files"]
+        validation_results["docker_available"]
+        and validation_results["kubectl_available"]
+        and validation_results["kubernetes_access"]
+        and validation_results["required_files"]
     )
 
     validation_results["overall_valid"] = is_valid
@@ -148,12 +156,7 @@ def build_docker_image_task(validation_results: dict, image_tag: str):
     dockerfile_path = "infra/docker/Dockerfile.serve"
 
     # Build command
-    cmd = [
-        "docker", "build",
-        "-f", dockerfile_path,
-        "-t", image_tag,
-        build_context
-    ]
+    cmd = ["docker", "build", "-f", dockerfile_path, "-t", image_tag, build_context]
 
     try:
         print(f"Running: {' '.join(cmd)}")
@@ -161,7 +164,11 @@ def build_docker_image_task(validation_results: dict, image_tag: str):
 
         if result.returncode == 0:
             print("✅ Docker image built successfully")
-            return {"success": True, "image_tag": image_tag, "build_output": result.stdout}
+            return {
+                "success": True,
+                "image_tag": image_tag,
+                "build_output": result.stdout,
+            }
         else:
             print("❌ Docker build failed")
             print("STDOUT:", result.stdout)
@@ -187,17 +194,16 @@ def push_docker_image_task(build_results: dict):
     if DOCKER_USERNAME and DOCKER_PASSWORD and registry != "localhost":
         try:
             login_cmd = [
-                "docker", "login",
+                "docker",
+                "login",
                 registry,
-                "-u", DOCKER_USERNAME,
-                "--password-stdin"
+                "-u",
+                DOCKER_USERNAME,
+                "--password-stdin",
             ]
 
             result = subprocess.run(
-                login_cmd,
-                input=DOCKER_PASSWORD,
-                capture_output=True,
-                text=True
+                login_cmd, input=DOCKER_PASSWORD, capture_output=True, text=True
             )
 
             if result.returncode == 0:
@@ -279,21 +285,21 @@ def deploy_to_kubernetes_task(push_results: dict, deployment_type: str = "rollin
 
     try:
         # Read and update the deployment YAML
-        with open(deployment_file, 'r') as f:
+        with open(deployment_file, "r") as f:
             deployment_yaml = list(yaml.safe_load_all(f))
 
         # Find the deployment and update the image
         for doc in deployment_yaml:
-            if doc.get('kind') == 'Deployment':
-                containers = doc['spec']['template']['spec']['containers']
+            if doc.get("kind") == "Deployment":
+                containers = doc["spec"]["template"]["spec"]["containers"]
                 for container in containers:
-                    if container['name'] == 'fraud-detector':
-                        container['image'] = image_tag
+                    if container["name"] == "fraud-detector":
+                        container["image"] = image_tag
                         print(f"Updated image to: {image_tag}")
                         break
 
         # Write updated deployment
-        with open(updated_deployment_file, 'w') as f:
+        with open(updated_deployment_file, "w") as f:
             yaml.dump_all(deployment_yaml, f, default_flow_style=False)
 
         # Apply the deployment
@@ -308,7 +314,7 @@ def deploy_to_kubernetes_task(push_results: dict, deployment_type: str = "rollin
                 "success": True,
                 "deployment_file": updated_deployment_file,
                 "namespace": namespace,
-                "image_tag": image_tag
+                "image_tag": image_tag,
             }
         else:
             print("❌ Kubernetes deployment failed")
@@ -338,10 +344,13 @@ def wait_for_rollout_task(deployment_results: dict):
         while time.time() - start_time < max_wait_time:
             # Check rollout status
             status_cmd = [
-                "kubectl", "rollout", "status",
+                "kubectl",
+                "rollout",
+                "status",
                 f"deployment/{deployment_name}",
-                "-n", namespace,
-                "--timeout=30s"
+                "-n",
+                namespace,
+                "--timeout=30s",
             ]
 
             result = subprocess.run(status_cmd, capture_output=True, text=True)
@@ -351,29 +360,39 @@ def wait_for_rollout_task(deployment_results: dict):
 
                 # Get pod information
                 pods_cmd = [
-                    "kubectl", "get", "pods",
-                    "-l", "app=fraud-detector",
-                    "-n", namespace,
-                    "-o", "json"
+                    "kubectl",
+                    "get",
+                    "pods",
+                    "-l",
+                    "app=fraud-detector",
+                    "-n",
+                    namespace,
+                    "-o",
+                    "json",
                 ]
 
                 pods_result = subprocess.run(pods_cmd, capture_output=True, text=True)
                 if pods_result.returncode == 0:
                     pods_info = json.loads(pods_result.stdout)
-                    ready_pods = sum(1 for pod in pods_info['items']
-                                   if pod['status']['phase'] == 'Running')
+                    ready_pods = sum(
+                        1
+                        for pod in pods_info["items"]
+                        if pod["status"]["phase"] == "Running"
+                    )
 
                     print(f"✅ {ready_pods} pods ready")
                     return {
                         "success": True,
                         "ready_pods": ready_pods,
-                        "rollout_time": time.time() - start_time
+                        "rollout_time": time.time() - start_time,
                     }
 
             time.sleep(10)  # Wait 10 seconds before checking again
 
         # Timeout
-        raise TimeoutError(f"Deployment rollout timed out after {max_wait_time} seconds")
+        raise TimeoutError(
+            f"Deployment rollout timed out after {max_wait_time} seconds"
+        )
 
     except Exception as e:
         print(f"❌ Error waiting for rollout: {e}")
@@ -394,9 +413,14 @@ def validate_deployment_health_task(rollout_results: dict):
     try:
         # Get service information
         service_cmd = [
-            "kubectl", "get", "service", service_name,
-            "-n", namespace,
-            "-o", "json"
+            "kubectl",
+            "get",
+            "service",
+            service_name,
+            "-n",
+            namespace,
+            "-o",
+            "json",
         ]
 
         result = subprocess.run(service_cmd, capture_output=True, text=True)
@@ -404,18 +428,23 @@ def validate_deployment_health_task(rollout_results: dict):
             raise RuntimeError(f"Cannot get service info: {result.stderr}")
 
         service_info = json.loads(result.stdout)
-        service_ip = service_info['spec']['clusterIP']
-        service_port = service_info['spec']['ports'][0]['port']
+        service_ip = service_info["spec"]["clusterIP"]
+        service_port = service_info["spec"]["ports"][0]["port"]
 
         print(f"Service available at: {service_ip}:{service_port}")
 
         # Test health endpoint (would need port forwarding in production)
         # For now, we'll test the pods directly
         pods_cmd = [
-            "kubectl", "get", "pods",
-            "-l", "app=fraud-detector",
-            "-n", namespace,
-            "-o", "jsonpath='{.items[0].status.podIP}'"
+            "kubectl",
+            "get",
+            "pods",
+            "-l",
+            "app=fraud-detector",
+            "-n",
+            namespace,
+            "-o",
+            "jsonpath='{.items[0].status.podIP}'",
         ]
 
         pod_result = subprocess.run(pods_cmd, capture_output=True, text=True)
@@ -425,14 +454,17 @@ def validate_deployment_health_task(rollout_results: dict):
 
             # Port forward for testing (in background)
             port_forward_cmd = [
-                "kubectl", "port-forward",
-                "-n", namespace,
+                "kubectl",
+                "port-forward",
+                "-n",
+                namespace,
                 f"svc/{service_name}",
-                "8080:80"
+                "8080:80",
             ]
 
             # Start port forwarding in background
             import threading
+
             def run_port_forward():
                 subprocess.run(port_forward_cmd, capture_output=True, timeout=30)
 
@@ -453,10 +485,18 @@ def validate_deployment_health_task(rollout_results: dict):
             except requests.RequestException as e:
                 print(f"⚠️ Health check request failed: {e}")
                 # Don't fail deployment for health check issues in CI
-                return {"healthy": True, "health_check_passed": False, "warning": str(e)}
+                return {
+                    "healthy": True,
+                    "health_check_passed": False,
+                    "warning": str(e),
+                }
         else:
             print("⚠️ Cannot get pod IP for health check")
-            return {"healthy": True, "health_check_passed": False, "warning": "Cannot access pods"}
+            return {
+                "healthy": True,
+                "health_check_passed": False,
+                "warning": "Cannot access pods",
+            }
 
     except Exception as e:
         print(f"❌ Error validating deployment health: {e}")
@@ -477,9 +517,12 @@ def rollback_deployment_task(deployment_results: dict, reason: str):
     try:
         # Rollback to previous revision
         rollback_cmd = [
-            "kubectl", "rollout", "undo",
+            "kubectl",
+            "rollout",
+            "undo",
             f"deployment/{deployment_name}",
-            "-n", namespace
+            "-n",
+            namespace,
         ]
 
         print(f"Running: {' '.join(rollback_cmd)}")
@@ -490,12 +533,17 @@ def rollback_deployment_task(deployment_results: dict, reason: str):
 
             # Wait for rollback to complete
             wait_cmd = [
-                "kubectl", "rollout", "status",
+                "kubectl",
+                "rollout",
+                "status",
                 f"deployment/{deployment_name}",
-                "-n", namespace
+                "-n",
+                namespace,
             ]
 
-            wait_result = subprocess.run(wait_cmd, capture_output=True, text=True, timeout=300)
+            wait_result = subprocess.run(
+                wait_cmd, capture_output=True, text=True, timeout=300
+            )
 
             if wait_result.returncode == 0:
                 print("✅ Rollback completed successfully")
@@ -546,7 +594,7 @@ def cleanup_artifacts_task(deployment_results: dict):
 def deployment_pipeline(
     image_tag: str = None,
     deployment_type: str = "rolling",
-    skip_validation: bool = False
+    skip_validation: bool = False,
 ):
     """
     End-to-end deployment pipeline implementing:
@@ -599,8 +647,7 @@ def deployment_pipeline(
             if not health_results.get("healthy", False):
                 print("❌ Deployment health check failed - initiating rollback")
                 rollback_results = rollback_deployment_task(
-                    deployment_results,
-                    "Health check failed"
+                    deployment_results, "Health check failed"
                 )
                 raise RuntimeError("Deployment health validation failed")
             else:
@@ -619,8 +666,14 @@ def deployment_pipeline(
             "namespace": DEPLOYMENT_CONFIG["namespace"],
             "timestamp": datetime.now().isoformat(),
             "phases_completed": [
-                "validation", "build", "push", "deploy", "rollout", "health_check", "cleanup"
-            ]
+                "validation",
+                "build",
+                "push",
+                "deploy",
+                "rollout",
+                "health_check",
+                "cleanup",
+            ],
         }
 
         print("🎉 Deployment Pipeline completed successfully!")
@@ -645,7 +698,7 @@ def deployment_pipeline(
             "error": str(e),
             "image_tag": image_tag,
             "timestamp": datetime.now().isoformat(),
-            "rollback_attempted": deployment_results is not None
+            "rollback_attempted": deployment_results is not None,
         }
 
 
@@ -689,7 +742,7 @@ if __name__ == "__main__":
     results = deployment_pipeline(
         image_tag=image_tag,
         deployment_type=deployment_type,
-        skip_validation=skip_validation
+        skip_validation=skip_validation,
     )
 
     if results["deployment_success"]:

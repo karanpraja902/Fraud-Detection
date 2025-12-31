@@ -33,4 +33,4 @@ VALIDATION_SIZE = 0.2
 EXPERIMENT_NAME = "fraud_detection_notebooks"
 
 # Plot styling
-PLOT_STYLE = 'seaborn-v0_8'
+PLOT_STYLE = "seaborn-v0_8"
