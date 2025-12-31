@@ -15,12 +15,18 @@ import mlflow.sklearn
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from sklearn.metrics import (auc, average_precision_score,
-                             classification_report, confusion_matrix, f1_score,
-                             precision_recall_curve, precision_score,
-                             recall_score, roc_curve)
-from sklearn.model_selection import (StratifiedKFold, cross_val_predict,
-                                     train_test_split)
+from sklearn.metrics import (
+    auc,
+    average_precision_score,
+    classification_report,
+    confusion_matrix,
+    f1_score,
+    precision_recall_curve,
+    precision_score,
+    recall_score,
+    roc_curve,
+)
+from sklearn.model_selection import StratifiedKFold, cross_val_predict, train_test_split
 
 warnings.filterwarnings("ignore")
 

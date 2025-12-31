@@ -22,8 +22,12 @@ warnings.filterwarnings("ignore")
 
 # Add src to path to import our modules
 sys.path.append("src")
-from data.preprocess import (handle_imbalance, load_data, normalize_features,
-                             run_preprocessing)
+from data.preprocess import (
+    handle_imbalance,
+    load_data,
+    normalize_features,
+    run_preprocessing,
+)
 from models.evaluate import ModelEvaluator, evaluate_and_monitor
 from models.train import load_data as load_processed_data
 from models.train import train_model
