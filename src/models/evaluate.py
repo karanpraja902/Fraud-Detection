@@ -58,9 +58,6 @@ class ModelEvaluator:
         self.experiment_name = experiment_name
         self.model: Optional[BaseEstimator] = None
 
-        # Set MLflow experiment
-        mlflow.set_experiment(experiment_name)
-
     def load_model(self):
         """Load the trained model from disk."""
         try:
@@ -105,6 +102,9 @@ class ModelEvaluator:
         if self.model is None:
             if not self.load_model():
                 raise ValueError("Could not load model")
+
+        # Set MLflow experiment
+        mlflow.set_experiment(self.experiment_name)
 
         results = {
             "dataset": dataset_name,
