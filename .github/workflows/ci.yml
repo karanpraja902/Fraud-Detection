@@ -75,6 +75,10 @@ jobs:
       run: |
         mkdir -p data/raw data/processed
 
+    - name: Install minimal dependencies for dataset creation
+      run: |
+        pip install pandas numpy
+
     - name: Create synthetic dataset
       run: |
         if [ ! -f data/raw/creditcard.csv ]; then
