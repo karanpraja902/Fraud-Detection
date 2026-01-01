@@ -154,6 +154,29 @@ jobs:
       run: |
         pip install -r requirements.txt
 
+    - name: Setup data directory
+      run: |
+        mkdir -p data/raw data/processed
+
+    - name: Download dataset for training
+      env:
+        KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+        KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
+      run: |
+        echo "Downloading credit card fraud dataset..."
+        pip install kaggle
+
+        # Download from Kaggle (if credentials provided)
+        if [ -n "$KAGGLE_USERNAME" ] && [ -n "$KAGGLE_KEY" ]; then
+          kaggle datasets download -d mlg-ulb/creditcardfraud -p data/raw --unzip
+          ls -la data/raw/
+          echo "Dataset downloaded from Kaggle"
+        else
+          echo "Kaggle credentials not found - creating synthetic dataset for training"
+          # Create larger synthetic dataset for training using our script
+          python scripts/create_test_dataset.py --samples 100000
+        fi
+
     - name: Restore training artifacts
       continue-on-error: true
       uses: actions/download-artifact@v4
