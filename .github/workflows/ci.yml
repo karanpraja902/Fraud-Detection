@@ -76,10 +76,13 @@ jobs:
         mkdir -p data/raw data/processed
 
     - name: Create synthetic dataset
-      if: failure()  # Only run if Kaggle download fails
       run: |
-        echo "Creating synthetic dataset for CI testing..."
-        python scripts/create_test_dataset.py
+        if [ ! -f data/raw/creditcard.csv ]; then
+          echo "Creating synthetic dataset for CI testing..."
+          python scripts/create_test_dataset.py
+        else
+          echo "Using existing dataset"
+        fi
 
     - name: Cache pip dependencies
       uses: actions/cache@v3
@@ -163,9 +166,6 @@ jobs:
     - name: Setup data directory
       run: |
         mkdir -p data/raw data/processed
-        # Copy synthetic data for validation
-        cp data/raw/creditcard.csv data/processed/train.csv || true
-        cp data/raw/creditcard.csv data/processed/test.csv || true
 
     - name: Cache pip dependencies
       uses: actions/cache@v3
