@@ -36,8 +36,13 @@ def load_data():
 
 
 def train_model(train_path: str = str(DATA_PATH)):
-    # Set MLflow tracking URI and experiment
-    mlflow.set_tracking_uri("https://dagshub.com/karanpraja902/Fraud-Detection.mlflow")
+    # Set MLflow tracking URI - use local file store in CI
+    import os
+    if os.environ.get('GITHUB_ACTIONS'):
+        # Use local file store for CI
+        mlflow.set_tracking_uri("file:./mlruns")
+    else:
+        mlflow.set_tracking_uri("https://dagshub.com/karanpraja902/Fraud-Detection.mlflow")
 
     # Create experiment if it doesn't exist
     try:
