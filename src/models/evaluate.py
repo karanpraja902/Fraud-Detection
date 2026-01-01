@@ -142,7 +142,7 @@ class ModelEvaluator:
             results["bias_analysis"] = self._bias_and_fairness_analysis(X, y, y_pred)
 
             # Log all results to MLflow
-            self._log_to_mlflow(results, X)
+            self._log_to_mlflow(results, X, y)
 
             print(f"Evaluation completed for {dataset_name} dataset")
             print(".3f")
@@ -385,7 +385,7 @@ class ModelEvaluator:
 
         return bias_analysis
 
-    def _log_to_mlflow(self, results: Dict[str, Any], X: pd.DataFrame):
+    def _log_to_mlflow(self, results: Dict[str, Any], X: pd.DataFrame, y: pd.Series):
         """Log evaluation results to MLflow."""
         # Log metrics
         for metric_name, metric_value in results["metrics"].items():
