@@ -155,6 +155,7 @@ jobs:
         pip install -r requirements.txt
 
     - name: Restore training artifacts
+      continue-on-error: true
       uses: actions/download-artifact@v4
       with:
         name: training-artifacts
