@@ -165,13 +165,16 @@ jobs:
       id: training
       env:
         MLFLOW_TRACKING_URI: ${{ env.MLFLOW_TRACKING_URI }}
+        TRIGGER_TYPE: ${{ github.event.inputs.trigger_type || 'scheduled' }}
       run: |
         echo "🚀 Starting continuous training pipeline..."
 
-        trigger_type="${{ github.event.inputs.trigger_type || 'scheduled' }}"
-
         python -c "
+        import os
         from pipelines.training_pipeline import continuous_training_pipeline
+
+        # Get trigger type from environment
+        trigger_type = os.environ.get('TRIGGER_TYPE', 'scheduled')
 
         # Run the training pipeline
         results = continuous_training_pipeline(trigger_type=trigger_type)
@@ -180,7 +183,6 @@ jobs:
         print(f'Model registered: {results[\"model_registered\"]}')
 
         # Set outputs for next jobs
-        import os
         with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
             f.write(f'registered={results[\"model_registered\"]}\n')
             f.write(f'version=latest\n')  # In production, get actual version
