@@ -213,10 +213,10 @@ jobs:
           echo "BentoML configuration found"
           # Basic YAML validation
           python -c "
-          import yaml
-          with open('bentofile.yaml') as f:
-              config = yaml.safe_load(f)
-              print('BentoML config validation passed')
+        import yaml
+        with open('bentofile.yaml') as f:
+            config = yaml.safe_load(f)
+            print('BentoML config validation passed')
           "
         else
           echo "BentoML configuration not found"
