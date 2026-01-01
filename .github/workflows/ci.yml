@@ -124,22 +124,23 @@ jobs:
         from src.models.evaluate import ModelEvaluator
         from sklearn.ensemble import RandomForestClassifier
         import joblib
+        import pandas as pd
 
         # Create dummy model for testing with balanced data
         model = RandomForestClassifier(n_estimators=10, random_state=42)
-        X_test = [
+        X_test = pd.DataFrame([
             [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 100],
             [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 200],
             [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 50],
             [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 300]
-        ]
-        y_test = [0, 0, 1, 1]  # Include both classes
+        ], columns=[f'f{i}' for i in range(1, 14)])
+        y_test = pd.Series([0, 0, 1, 1])  # Include both classes
         model.fit(X_test, y_test)
 
         # Save and evaluate
         joblib.dump(model, 'test_model.pkl')
         evaluator = ModelEvaluator('test_model.pkl')
-        results = evaluator.evaluate_model(X_test, y_test, 'test')
+        results = evaluator.evaluate_model(X_test, y_test, 'test', cv_folds=2)
         print('Evaluation test passed')
         "
 
