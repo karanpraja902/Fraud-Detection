@@ -344,11 +344,7 @@ class ModelEvaluator:
 
         elif hasattr(model, "coef_"):
             # For linear models
-            coefficients = (
-                model.coef_[0]
-                if len(model.coef_.shape) > 1
-                else model.coef_
-            )
+            coefficients = model.coef_[0] if len(model.coef_.shape) > 1 else model.coef_
             feature_names = X.columns
 
             indices = np.argsort(np.abs(coefficients))[::-1]
