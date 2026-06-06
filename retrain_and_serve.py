@@ -11,6 +11,7 @@ from functools import wraps
 import joblib
 import numpy as np
 import pandas as pd
+import sklearn
 from flask import (
     Flask,
     flash,
@@ -93,6 +94,19 @@ def load_or_retrain_model():
 # Global model variable
 model = None
 
+def build_prediction_frame(data):
+    """Create a model-ready row, filling omitted feature values with neutral zeros."""
+    feature_names = getattr(model, 'feature_names_in_', None)
+    if feature_names is None:
+        return pd.DataFrame([data])
+
+    row = {feature: 0.0 for feature in feature_names}
+    for key, value in data.items():
+        if key in row and value is not None:
+            row[key] = float(value)
+
+    return pd.DataFrame([row], columns=feature_names)
+
 def login_required(f):
     """Decorator to require login for routes"""
     @wraps(f)
@@ -120,7 +134,7 @@ def predict():
         if not data:
             return jsonify({"error": "No data provided"}), 400
 
-        df = pd.DataFrame([data])
+        df = build_prediction_frame(data)
         prediction_proba = model.predict_proba(df)
         prediction = model.predict(df)
 
@@ -178,7 +192,7 @@ def info():
     return jsonify({
         "service": "fraud-detection-model",
         "status": "retrained with current sklearn",
-        "sklearn_version": "1.3.0",
+        "sklearn_version": sklearn.__version__,
         "model_loaded": model is not None,
         "endpoints": {
             "GET /health": "Health check",
@@ -212,37 +226,10 @@ def predict_form():
                                  model_loaded=True,
                                  error=f"Invalid numeric input: {str(e)}")
 
-        # Load transaction data for baseline
-        df = pd.read_csv('data/processed/test.csv')
-
-        # Create baseline using zero values for V1-V28 (neutral baseline)
-        # This allows Amount and Time to have full influence on the prediction
-        prediction_data = {}
-        for col in df.columns:
-            if col != 'Class':
-                if col.startswith('V'):
-                    prediction_data[col] = 0.0  # Neutral PCA components
-                else:
-                    prediction_data[col] = df[col].mean()  # Use average for Time/Amount
-
-        # Load original data to fit scalers (same as training preprocessing)
-        original_df = pd.read_csv('data/raw/creditcard.csv')
-
-        # Create and fit scalers on original data (same as preprocessing)
-        amount_scaler = StandardScaler()
-        time_scaler = StandardScaler()
-
-        amount_scaler.fit(original_df['Amount'].values.reshape(-1, 1))
-        time_scaler.fit(original_df['Time'].values.reshape(-1, 1))
-
-        # Override with user-provided values (scaled)
-        if user_amount is not None:
-            prediction_data['Amount'] = amount_scaler.transform([[user_amount]])[0][0]
-        if user_time is not None:
-            prediction_data['Time'] = time_scaler.transform([[user_time]])[0][0]
-
-        # Convert to DataFrame for prediction
-        df_pred = pd.DataFrame([prediction_data])
+        df_pred = build_prediction_frame({
+            'Amount': user_amount if user_amount is not None else 0.0,
+            'Time': user_time if user_time is not None else 0.0,
+        })
         prediction_proba = model.predict_proba(df_pred)
         prediction = model.predict(df_pred)
 

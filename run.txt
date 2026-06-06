@@ -1,0 +1,8 @@
+cd /run/media/karan/EEE454F0E454BC91/Fraud-Detection
+source .venv/bin/activate
+python retrain_and_serve.py
+cd /run/media/karan/EEE454F0E454BC91/Fraud-Detection
+uv venv --python 3.10.14 .venv
+source .venv/bin/activate
+uv pip install flask pandas numpy scikit-learn==1.7.2 joblib
+python retrain_and_serve.py
