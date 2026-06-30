@@ -3,6 +3,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 venv/
+.venv/
+.vercel/
 .env
 
 # DVC
@@ -19,3 +21,4 @@ mlruns/
 data/processed/
 data/raw/
 data/interim/
+.vercel
